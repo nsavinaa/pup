@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>География</h2>
+
+<h3>Средняя зарплата по городам (топ-10)</h3>
+<canvas id="salaryChart"></canvas>
+
+<h3>Доля вакансий по городам (топ-10)</h3>
+<canvas id="shareChart"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const salaryData = JSON.parse('{{ top_salary_cities|escapejs }}');
+    const shareData = JSON.parse('{{ top_share_cities|escapejs }}');
+
+    new Chart(document.getElementById("salaryChart"), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(salaryData),
+            datasets: [{
+                label: 'Средняя зарплата',
+                data: Object.values(salaryData),
+                backgroundColor: 'rgba(75, 192, 192, 0.7)'
+            }]
+        }
+    });
+
+    new Chart(document.getElementById("shareChart"), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(shareData),
+            datasets: [{
+                label: 'Доля вакансий',
+                data: Object.values(shareData),
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                    '#9966FF', '#FF9F40', '#66FF66', '#FF6666',
+                    '#CCCCFF', '#66CCFF'
+                ]
+            }]
+        }
+    });
+</script>
+{% endblock %}

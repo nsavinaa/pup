@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Последние вакансии</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Зарплата</th>
+            <th>Локация</th>
+            <th>Дата публикации</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for vacancy in vacancies %}
+        <tr>
+            <td>{{ vacancy.name }}</td>
+            <td>
+                {% if vacancy.salary_from and vacancy.salary_to %}
+                    {{ vacancy.salary_from }} - {{ vacancy.salary_to }} {{ vacancy.salary_currency }}
+                {% elif vacancy.salary_from %}
+                    от {{ vacancy.salary_from }} {{ vacancy.salary_currency }}
+                {% elif vacancy.salary_to %}
+                    до {{ vacancy.salary_to }} {{ vacancy.salary_currency }}
+                {% else %}
+                    Не указана
+                {% endif %}
+            </td>
+            <td>{{ vacancy.area_name }}</td>
+            <td>{{ vacancy.published_at }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Вакансии не найдены.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

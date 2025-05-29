@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Общая статистика{% endblock %}
+{% block content %}
+<h1>Общая статистика</h1>
+
+<h2>Динамика уровня зарплат по годам</h2>
+<table>
+    <tr><th>Год</th><th>Средняя зарплата</th></tr>
+    {% for year, salary in salary_data.items %}
+        <tr><td>{{ year }}</td><td>{{ salary }}</td></tr>
+    {% endfor %}
+</table>
+
+<canvas id="salaryChart"></canvas>
+
+<h2>Динамика количества вакансий по годам</h2>
+<table>
+    <tr><th>Год</th><th>Количество вакансий</th></tr>
+    {% for year, count in vacancy_data.items %}
+        <tr><td>{{ year }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+</table>
+
+<canvas id="vacancyChart"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Получаем JSON из контекста, экранируем с escapejs
+    const salaryData = JSON.parse('{{ salary_data_json|escapejs }}');
+    const vacancyData = JSON.parse('{{ vacancy_data_json|escapejs }}');
+
+    const salaryCtx = document.getElementById('salaryChart').getContext('2d');
+    const vacancyCtx = document.getElementById('vacancyChart').getContext('2d');
+
+    new Chart(salaryCtx, {
+        type: 'line',
+        data: {
+            labels: Object.keys(salaryData),
+            datasets: [{
+                label: 'Средняя зарплата',
+                data: Object.values(salaryData),
+                borderColor: 'blue',
+                fill: false,
+            }]
+        }
+    });
+
+    new Chart(vacancyCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(vacancyData),
+            datasets: [{
+                label: 'Количество вакансий',
+                data: Object.values(vacancyData),
+                backgroundColor: 'green',
+            }]
+        }
+    });
+</script>
+{% endblock %}

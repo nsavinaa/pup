@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Аналитика 360{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header, footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+        }
+        header h1 {
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+        }
+        nav {
+            width: 200px;
+            background-color: #ecf0f1;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            margin-bottom: 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #2c3e50;
+        }
+        main {
+            flex: 1;
+            padding: 20px;
+        }
+        footer {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>DataAnalyst.Pro</h1> <!-- твой логотип/название проекта -->
+    </header>
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="{% url 'index' %}">Главная</a></li>
+                <li><a href="{% url 'statistics' %}">Общая статистика</a></li>
+                <li><a href="{% url 'demand' %}">Востребованность</a></li>
+                <li><a href="{% url 'geography' %}">География</a></li>
+                <li><a href="{% url 'skills' %}">Навыки</a></li>
+                <li><a href="{% url 'vacancies' %}">Последние вакансии</a></li>
+            </ul>
+        </nav>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <footer>
+        Савина Анастасия, группа РИ-231002
+    </footer>
+</body>
+</html>
