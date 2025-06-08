@@ -1,15 +1,22 @@
-from django.db.models import Avg, Count, F, FloatField, Value
 import json
 from django.shortcuts import render
-from main.models import Vacancy, MainPage, StatSection
-from django.db.models import Count, Avg, F, FloatField
-from django.db.models.functions import ExtractYear, Coalesce
+from django.db.models import F, FloatField, Value, Avg, Count
+from django.db.models.functions import Coalesce, ExtractYear
+from main.models import Vacancy, MainPage
+from django.db.models import ExpressionWrapper
+
 # Курсы валют — актуализируй при необходимости
 currency_to_rub = {
     'RUR': 1,
-    'USD': 75,
+    'USD': 80,
     'EUR': 90,
-    'KZT': 0.18,
+    'KZT': 0.15,
+    'UZS': 0.006,
+    'UAH': 1.9,
+    'AZN': 45,
+    'BYR': 31,
+    'GEL': 29,
+    'KGS': 0.9,
     # Добавляй другие валюты, если нужно
 }
 
@@ -44,7 +51,14 @@ def demand(request):
     qs = Vacancy.objects.annotate(year=ExtractYear('published_at')) \
         .values('year') \
         .annotate(
-            avg_salary=Coalesce(Avg((F('salary_from') + F('salary_to')) / 2, output_field=FloatField()), 0),
+            avg_salary=Coalesce(
+                Avg(
+                    (F('salary_from') + F('salary_to')) / 2,
+                    output_field=FloatField()
+                ),
+                Value(0),
+                output_field=FloatField()
+            ),
             vacancy_count=Count('id')
         ).order_by('year')
 
@@ -57,27 +71,47 @@ def demand(request):
     }
     return render(request, 'demand.html', context)
 
+
 def geography(request):
     total_vacancies = Vacancy.objects.count()
-    # Средняя зарплата и количество вакансий по городам
-    qs = Vacancy.objects.values('area_name') \
+
+    qs = Vacancy.objects.exclude(area_name__isnull=True).exclude(salary_currency__isnull=True).exclude(salary_currency='') \
+        .values('area_name', 'salary_currency') \
         .annotate(
-            avg_salary=Coalesce(Avg((F('salary_from') + F('salary_to')) / 2, output_field=FloatField()), 0),
+            avg_salary_raw=ExpressionWrapper(
+                (F('salary_from') + F('salary_to')) / 2,
+                output_field=FloatField()
+            ),
             vacancy_count=Count('id')
-        ).filter(area_name__isnull=False).order_by('-vacancy_count')
+        )
 
-    # Фильтрация по минимуму вакансий (например, 50)
-    filtered = [c for c in qs if c['vacancy_count'] >= 50]
+    city_salary = {}
 
-    top_salary_cities = dict(sorted(
-        [(c['area_name'], round(c['avg_salary'], 2)) for c in filtered],
-        key=lambda x: x[1], reverse=True
-    )[:10])
+    for vac in qs:
+        if vac['avg_salary_raw'] is None:
+            continue  # пропускаем вакансии без зарплаты
 
-    top_share_cities = dict(sorted(
-        [(c['area_name'], round(c['vacancy_count'] / total_vacancies, 4)) for c in filtered],
-        key=lambda x: x[1], reverse=True
-    )[:10])
+        currency = vac['salary_currency']
+        if currency not in currency_to_rub:
+            raise ValueError(f"Неизвестная валюта: {currency}")
+
+        salary_in_rub = vac['avg_salary_raw'] * currency_to_rub[currency]
+        city = vac['area_name']
+
+        if city not in city_salary:
+            city_salary[city] = {'salary_sum': 0, 'count': 0, 'vacancy_count': 0}
+        city_salary[city]['salary_sum'] += salary_in_rub * vac['vacancy_count']
+        city_salary[city]['count'] += vac['vacancy_count']
+        city_salary[city]['vacancy_count'] += vac['vacancy_count']
+
+    filtered_cities = {city: data for city, data in city_salary.items() if data['vacancy_count'] >= 50}
+
+    avg_salary_cities = {city: round(data['salary_sum'] / data['count'], 2) for city, data in filtered_cities.items()}
+
+    share_cities = {city: round(data['vacancy_count'] / total_vacancies, 4) for city, data in filtered_cities.items()}
+
+    top_salary_cities = dict(sorted(avg_salary_cities.items(), key=lambda x: x[1], reverse=True)[:10])
+    top_share_cities = dict(sorted(share_cities.items(), key=lambda x: x[1], reverse=True)[:10])
 
     context = {
         'top_salary_cities': json.dumps(top_salary_cities),
@@ -85,15 +119,15 @@ def geography(request):
     }
     return render(request, 'geography.html', context)
 
+
 def skills(request):
     from collections import Counter
 
-    # Возьмём только последние 10000 вакансий, чтобы не грузить всё
     vacancies = Vacancy.objects.exclude(key_skills__isnull=True).order_by('-published_at')[:10000]
 
     skills_counter = Counter()
     for vac in vacancies:
-        skills = [s.strip() for s in vac.key_skills.split('\n') if s.strip()]
+        skills = [s.strip() for s in vac.key_skills.split('\n') if s.strip() and s.strip().lower() != 'nan']
         skills_counter.update(skills)
 
     top_skills = dict(skills_counter.most_common(10))
