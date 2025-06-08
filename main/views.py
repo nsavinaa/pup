@@ -9,9 +9,12 @@ from main.models import Vacancy
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+from django.db import models
+from main.models import MainPage
 
 def index(request):
-    return render(request, 'index.html')
+    main_page = MainPage.objects.first()  # или по ID, если несколько записей
+    return render(request, 'index.html', {'main_page': main_page})
 
 def statistics(request):
     '''salary_sum = defaultdict(float)
@@ -40,7 +43,12 @@ def statistics(request):
         'vacancy_data_json': json.dumps(dict(vacancy_count)),
     }
     return render(request, 'statistics.html', context)'''
-    return render(request, 'statistics.html')
+    #return render(request, 'statistics.html')
+    from main.models import StatSection
+
+
+    sections = StatSection.objects.filter(section='overview')
+    return render(request, 'statistics.html', {'sections': sections})
 
 def demand(request):
     '''salary_sum = defaultdict(float)
