@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'pup-app.onrender.com']  # Добавил хост Render
+ALLOWED_HOSTS = ['*']  # Добавил хост Render
 
 INSTALLED_APPS = [
     'django.contrib.admin',
