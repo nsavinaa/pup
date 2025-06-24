@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'pup-app.onrender.com']  # Добавил хост Render
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,7 +57,6 @@ DATABASES = {
     }
 }
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -88,4 +87,3 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # ID проекта
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
