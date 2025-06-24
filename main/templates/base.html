@@ -1,8 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Аналитика 360{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,6 +31,7 @@
             background-color: #ecf0f1;
             padding: 20px;
             box-sizing: border-box;
+            border-right: 1px solid #bdc3c7;
         }
         nav ul {
             list-style: none;
@@ -40,9 +44,14 @@
             text-decoration: none;
             color: #2c3e50;
         }
+        nav ul li a.active {
+            font-weight: bold;
+            color: #2980b9;
+        }
         main {
             flex: 1;
             padding: 20px;
+            background-color: #f9f9f9;
         }
         footer {
             text-align: center;
@@ -51,17 +60,17 @@
 </head>
 <body>
     <header>
-        <h1>ANalyst.360</h1> <!-- твой логотип/название проекта -->
+        <h1>ANalyst.360</h1>
     </header>
     <div class="container">
         <nav>
             <ul>
-                <li><a href="{% url 'index' %}">Главная</a></li>
-                <li><a href="{% url 'statistics' %}">Общая статистика</a></li>
-                <li><a href="{% url 'demand' %}">Востребованность</a></li>
-                <li><a href="{% url 'geography' %}">География</a></li>
-                <li><a href="{% url 'skills' %}">Навыки</a></li>
-                <li><a href="{% url 'vacancies' %}">Последние вакансии</a></li>
+                <li><a href="{% url 'index' %}" class="{% if request.path == '/' %}active{% endif %}">Главная</a></li>
+                <li><a href="{% url 'statistics' %}" class="{% if request.path == '/statistics/' %}active{% endif %}">Общая статистика</a></li>
+                <li><a href="{% url 'demand' %}" class="{% if request.path == '/demand/' %}active{% endif %}">Востребованность</a></li>
+                <li><a href="{% url 'geography' %}" class="{% if request.path == '/geography/' %}active{% endif %}">География</a></li>
+                <li><a href="{% url 'skills' %}" class="{% if request.path == '/skills/' %}active{% endif %}">Навыки</a></li>
+                <li><a href="{% url 'vacancies' %}" class="{% if request.path == '/vacancies/' %}active{% endif %}">Последние вакансии</a></li>
             </ul>
         </nav>
         <main>

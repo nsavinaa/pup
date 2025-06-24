@@ -1,0 +1,1 @@
+web: gunicorn profession_site.wsgi

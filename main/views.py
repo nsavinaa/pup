@@ -1,9 +1,9 @@
-import json
+import requests
+from datetime import datetime, timedelta
 from django.shortcuts import render
-from django.db.models import F, FloatField, Value, Avg, Count
-from django.db.models.functions import Coalesce, ExtractYear
 from main.models import Vacancy, MainPage
-from django.db.models import ExpressionWrapper
+from django.conf import settings
+import os
 
 # Курсы валют — актуализируй при необходимости
 currency_to_rub = {
@@ -17,7 +17,6 @@ currency_to_rub = {
     'BYR': 31,
     'GEL': 29,
     'KGS': 0.9,
-    # Добавляй другие валюты, если нужно
 }
 
 def index(request):
@@ -25,124 +24,62 @@ def index(request):
     return render(request, 'index.html', {'main_page': main_page})
 
 def statistics(request):
-    # Сначала аннотируем среднюю зарплату для каждой вакансии
-    qs = Vacancy.objects.annotate(
-        year=ExtractYear('published_at'),
-        avg_salary_per_vacancy=Coalesce(
-            (F('salary_from') + F('salary_to')) / 2,
-            Value(0),
-            output_field=FloatField()
-        )
-    ).values('year').annotate(
-        avg_salary=Coalesce(Avg('avg_salary_per_vacancy'), Value(0), output_field=FloatField()),
-        vacancy_count=Count('id')
-    ).order_by('year')
-
-    salary_data = {entry['year']: round(entry['avg_salary'], 2) for entry in qs if entry['year'] is not None}
-    vacancy_data = {entry['year']: entry['vacancy_count'] for entry in qs if entry['year'] is not None}
-
-    context = {
-        'salary_data_json': json.dumps(salary_data),
-        'vacancy_data_json': json.dumps(vacancy_data),
-    }
-    return render(request, 'statistics.html', context)
+    return render(request, 'statistics.html')
 
 def demand(request):
-    qs = Vacancy.objects.annotate(year=ExtractYear('published_at')) \
-        .values('year') \
-        .annotate(
-            avg_salary=Coalesce(
-                Avg(
-                    (F('salary_from') + F('salary_to')) / 2,
-                    output_field=FloatField()
-                ),
-                Value(0),
-                output_field=FloatField()
-            ),
-            vacancy_count=Count('id')
-        ).order_by('year')
-
-    salary_data = {entry['year']: round(entry['avg_salary'], 2) for entry in qs if entry['year'] is not None}
-    vacancy_data = {entry['year']: entry['vacancy_count'] for entry in qs if entry['year'] is not None}
-
-    context = {
-        'salary_data_json': json.dumps(salary_data),
-        'vacancy_data_json': json.dumps(vacancy_data),
-    }
-    return render(request, 'demand.html', context)
+    return render(request, 'demand.html')
 
 
 def geography(request):
-    total_vacancies = Vacancy.objects.count()
-
-    qs = Vacancy.objects.exclude(area_name__isnull=True).exclude(salary_currency__isnull=True).exclude(salary_currency='') \
-        .values('area_name', 'salary_currency') \
-        .annotate(
-            avg_salary_raw=ExpressionWrapper(
-                (F('salary_from') + F('salary_to')) / 2,
-                output_field=FloatField()
-            ),
-            vacancy_count=Count('id')
-        )
-
-    city_salary = {}
-
-    for vac in qs:
-        if vac['avg_salary_raw'] is None:
-            continue  # пропускаем вакансии без зарплаты
-
-        currency = vac['salary_currency']
-        if currency not in currency_to_rub:
-            raise ValueError(f"Неизвестная валюта: {currency}")
-
-        salary_in_rub = vac['avg_salary_raw'] * currency_to_rub[currency]
-        city = vac['area_name']
-
-        if city not in city_salary:
-            city_salary[city] = {'salary_sum': 0, 'count': 0, 'vacancy_count': 0}
-        city_salary[city]['salary_sum'] += salary_in_rub * vac['vacancy_count']
-        city_salary[city]['count'] += vac['vacancy_count']
-        city_salary[city]['vacancy_count'] += vac['vacancy_count']
-
-    filtered_cities = {city: data for city, data in city_salary.items() if data['vacancy_count'] >= 50}
-
-    avg_salary_cities = {city: round(data['salary_sum'] / data['count'], 2) for city, data in filtered_cities.items()}
-
-    share_cities = {city: round(data['vacancy_count'] / total_vacancies, 4) for city, data in filtered_cities.items()}
-
-    top_salary_cities = dict(sorted(avg_salary_cities.items(), key=lambda x: x[1], reverse=True)[:10])
-    top_share_cities = dict(sorted(share_cities.items(), key=lambda x: x[1], reverse=True)[:10])
-
-    context = {
-        'top_salary_cities': json.dumps(top_salary_cities),
-        'top_share_cities': json.dumps(top_share_cities),
-    }
-    return render(request, 'geography.html', context)
+    return render(request, 'geography.html')
 
 
 def skills(request):
-    from collections import Counter
-
-    vacancies = Vacancy.objects.exclude(key_skills__isnull=True).order_by('-published_at')[:10000]
-
-    skills_counter = Counter()
-    for vac in vacancies:
-        skills = [s.strip() for s in vac.key_skills.split('\n') if s.strip() and s.strip().lower() != 'nan']
-        skills_counter.update(skills)
-
-    top_skills = dict(skills_counter.most_common(10))
-
-    context = {
-        'top_skills': json.dumps(top_skills),
-    }
-    return render(request, 'skills.html', context)
+    return render(request, 'skills.html')
 
 def vacancies(request):
-    # Последние 20 вакансий по дате публикации
-    vacancies = Vacancy.objects.filter(is_relevant=True).order_by('-published_at')[:20]
+    profession_keywords = ['аналитик', 'data analyst', 'бизнес-аналитик', 'bi-аналитик']
+    search_text = ' OR '.join(profession_keywords)
+    url = 'https://api.hh.ru/vacancies'
+    date_from = (datetime.now() - timedelta(days=1)).isoformat()
 
-    context = {
-        'vacancies': vacancies,
+    params = {
+        'text': search_text,
+        'area': 113,  # Россия
+        'specialization': 1,  # IT
+        'date_from': date_from,
+        'per_page': 10,
+        'order_by': 'publication_time'
     }
 
-    return render(request, 'vacancies.html', context)
+    response = requests.get(url, params=params)
+    vacancies = []
+
+    if response.status_code == 200:
+        for item in response.json().get('items', []):
+            vacancy_id = item['id']
+            detail_url = f'https://api.hh.ru/vacancies/{vacancy_id}'
+            detail_resp = requests.get(detail_url)
+
+            if detail_resp.status_code == 200:
+                detail = detail_resp.json()
+                salary = detail.get('salary') or {}
+                employer = detail.get('employer') or {}
+                area = detail.get('area') or {}
+
+                vacancy = {
+                    'name': detail.get('name'),
+                    'description': detail.get('description', '').strip()[:500],
+                    'skills': ', '.join([s['name'] for s in detail.get('key_skills', [])]),
+                    'company': employer.get('name', 'Не указана'),
+                    'salary_from': salary.get('from'),
+                    'salary_to': salary.get('to'),
+                    'salary_currency': salary.get('currency'),
+                    'area_name': area.get('name', 'Не указано'),
+                    'published_at': detail.get('published_at', '')[:10],
+                }
+                vacancies.append(vacancy)
+
+    return render(request, 'vacancies.html', {'vacancies': vacancies})
+    # Последние 20 вакансий по дате публикации
+

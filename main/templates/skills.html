@@ -3,23 +3,7 @@
 {% block content %}
 <h2>Навыки</h2>
 
-<h3>Топ-10 самых востребованных навыков</h3>
-<canvas id="skillsChart"></canvas>
+<h3>Топ-20 самых востребованных навыков</h3>
+<img src="/media/graphs/skills_analyst.png" alt="Топ 20 навыков">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const skillsData = JSON.parse('{{ top_skills|escapejs }}');
-
-    new Chart(document.getElementById("skillsChart"), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(skillsData),
-            datasets: [{
-                label: 'Количество упоминаний',
-                data: Object.values(skillsData),
-                backgroundColor: 'rgba(153, 102, 255, 0.7)',
-            }]
-        }
-    });
-</script>
 {% endblock %}

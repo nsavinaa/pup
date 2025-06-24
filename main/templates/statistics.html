@@ -1,60 +1,106 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Общая статистика{% endblock %}
+
 {% block content %}
-<h1>Общая статистика</h1>
+  <h1 class="text-2xl font-bold mb-6">Общая статистика</h1>
 
-<h2>Динамика уровня зарплат по годам</h2>
-<table>
-    <tr><th>Год</th><th>Средняя зарплата</th></tr>
-    {% for year, salary in salary_data.items %}
-        <tr><td>{{ year }}</td><td>{{ salary }}</td></tr>
-    {% endfor %}
-</table>
+  <!-- Динамика уровня зарплат по годам -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-2">Динамика уровня зарплат по годам</h2>
+    <table class="table-auto border border-gray-300 mb-4 w-full text-sm">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border px-3 py-1 text-left">Год</th>
+          <th class="border px-3 py-1 text-left">Средняя зарплата (₽)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for year, salary in salary_data.items %}
+          <tr>
+            <td class="border px-3 py-1">{{ year }}</td>
+            <td class="border px-3 py-1">{{ salary|floatformat:0 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <img src="/media/graphs/salary_dynamics.png" alt="График зарплат">
+    <img src="/media/graphs/table_salary_dynamics.png" alt="Таблица зарплат">
+  </section>
 
-<canvas id="salaryChart"></canvas>
+  <!-- Динамика количества вакансий по годам -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-2">Динамика количества вакансий по годам</h2>
+    <table class="table-auto border border-gray-300 mb-4 w-full text-sm">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border px-3 py-1 text-left">Год</th>
+          <th class="border px-3 py-1 text-left">Количество вакансий</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for year, count in vacancy_data.items %}
+          <tr>
+            <td class="border px-3 py-1">{{ year }}</td>
+            <td class="border px-3 py-1">{{ count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <img src="/media/graphs/table_vacancy_dynamics.png" alt="Таблица вакансий">
+    <img src="/media/graphs/stat_vacancy_dynamics.png" alt="График вакансий">
+  </section>
 
-<h2>Динамика количества вакансий по годам</h2>
-<table>
-    <tr><th>Год</th><th>Количество вакансий</th></tr>
-    {% for year, count in vacancy_data.items %}
-        <tr><td>{{ year }}</td><td>{{ count }}</td></tr>
-    {% endfor %}
-</table>
+  <!-- Уровень зарплат по городам -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-2">Уровень зарплат по городам (топ по убыванию)</h2>
+    <table class="table-auto border border-gray-300 mb-4 w-full text-sm">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border px-3 py-1 text-left">Город</th>
+          <th class="border px-3 py-1 text-left">Средняя зарплата (₽)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for city, salary in city_salary_data.items %}
+          <tr>
+            <td class="border px-3 py-1">{{ city }}</td>
+            <td class="border px-3 py-1">{{ salary|floatformat:0 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <img src="/media/graphs/salary_by_city.png" alt="Таблица Уровень зарплат по городам">
+    <img src="/media/graphs/city_salaries.png" alt="Уровень зарплат по городам">
+  </section>
 
-<canvas id="vacancyChart"></canvas>
+  <!-- Доля вакансий по городам -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-2">Доля вакансий по городам (топ по убыванию)</h2>
+    <table class="table-auto border border-gray-300 mb-4 w-full text-sm">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border px-3 py-1 text-left">Город</th>
+          <th class="border px-3 py-1 text-left">Доля вакансий (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for city, share in city_vacancy_share.items %}
+          <tr>
+            <td class="border px-3 py-1">{{ city }}</td>
+            <td class="border px-3 py-1">{{ share|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <img src="/media/graphs/table_vacancy_share_by_city.png" alt="Таблица Доля вакансий по городам">
+    <img src="/media/graphs/city_vacancy_share.png" alt="Доля вакансий по городам">
+  </section>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Получаем JSON из контекста, экранируем с escapejs
-    const salaryData = JSON.parse('{{ salary_data_json|escapejs }}');
-    const vacancyData = JSON.parse('{{ vacancy_data_json|escapejs }}');
-
-    const salaryCtx = document.getElementById('salaryChart').getContext('2d');
-    const vacancyCtx = document.getElementById('vacancyChart').getContext('2d');
-
-    new Chart(salaryCtx, {
-        type: 'line',
-        data: {
-            labels: Object.keys(salaryData),
-            datasets: [{
-                label: 'Средняя зарплата',
-                data: Object.values(salaryData),
-                borderColor: 'blue',
-                fill: false,
-            }]
-        }
-    });
-
-    new Chart(vacancyCtx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(vacancyData),
-            datasets: [{
-                label: 'Количество вакансий',
-                data: Object.values(vacancyData),
-                backgroundColor: 'green',
-            }]
-        }
-    });
-</script>
+  <!-- ТОП-10 навыков -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold mb-2">ТОП-10 самых востребованных навыков</h2>
+    <img src="/media/graphs/table_top_skills.png" alt="Таблица ТОП-10 навыков">
+    <img src="/media/graphs/skills.png" alt="ТОП-10 навыков">
+  </section>
 {% endblock %}

@@ -1,42 +1,20 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Востребованность{% endblock %}
+
 {% block content %}
-  <h2 class="text-xl font-bold mb-4">Динамика зарплат и количества вакансий</h2>
-  <canvas id="salaryChart" width="600" height="300"></canvas>
-  <canvas id="vacancyChart" width="600" height="300" class="mt-6"></canvas>
+  <h1 class="text-2xl font-bold mb-4">Востребованность профессии: Аналитик</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const salaryData = JSON.parse('{{ salary_data_json|escapejs }}');
-    const vacancyData = JSON.parse('{{ vacancy_data_json|escapejs }}');
+  <!-- Динамика зарплат -->
+  <h2 class="text-lg font-semibold mt-6 mb-2">Динамика уровня зарплат по годам</h2>
+  <img src="/media/graphs/table_salary_dynamics_analyst.png" alt="Таблица Динамика зарплат аналитиков по годам">
+  <img src="/media/graphs/salary_analyst_dynamics.png" alt="Динамика зарплат аналитиков по годам">
 
-    const labels = Object.keys(salaryData);
-
-    const salaryChart = new Chart(document.getElementById('salaryChart'), {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Средняя зарплата',
-          data: Object.values(salaryData),
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 2
-        }]
-      },
-    });
-
-    const vacancyChart = new Chart(document.getElementById('vacancyChart'), {
-      type: 'bar',
-      data: {
-        labels: Object.keys(vacancyData),
-        datasets: [{
-          label: 'Количество вакансий',
-          data: Object.values(vacancyData),
-          backgroundColor: 'rgba(153, 102, 255, 0.5)',
-          borderColor: 'rgba(153, 102, 255, 1)',
-          borderWidth: 2
-        }]
-      },
-    });
-  </script>
+  <!-- Динамика количества вакансий -->
+  <h2 class="text-lg font-semibold mb-2">Динамика количества вакансий по годам</h2>
+  <img src="/media/graphs/table_vacancy_dynamics_analyst.png" alt="Таблица Динамика вакансий аналитиков по годам">
+  <img src="/media/graphs/stat_vacancy_analyst_dynamics.png" alt="Динамика вакансий аналитиков по годам">
 {% endblock %}
+

@@ -1,16 +1,13 @@
 from pathlib import Path
 
-# Путь до корня проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Безопасность
-SECRET_KEY = 'your-secret-key'  # !!! замени на свой ключ
-DEBUG = True  # False для продакшена
+SECRET_KEY = 'your-secret-key'
+DEBUG = True
 
-# Указывай явно!
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
-# Приложения
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -18,11 +15,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
 
     'main',
 ]
 
-# Промежуточное ПО
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -38,7 +35,7 @@ ROOT_URLCONF = 'profession_site.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # если есть папка templates
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -53,7 +50,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'profession_site.wsgi.application'
 
-# База данных
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -61,7 +57,7 @@ DATABASES = {
     }
 }
 
-# Пароли
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -79,19 +75,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Язык и время
 LANGUAGE_CODE = 'ru-ru'
-TIME_ZONE = 'Europe/Moscow'
+TIME_ZONE = 'Asia/Yekaterinburg'
 USE_I18N = True
 USE_TZ = True
 
-# Статические файлы
 STATIC_URL = '/static/'
-#STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # для collectstatic, если понадобится
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Медиа файлы (загрузка через сайт)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ID проекта (используется Django)
+# ID проекта
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
